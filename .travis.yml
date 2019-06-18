@@ -6,7 +6,8 @@ go:
   - "1.12"
   - tip
 
-# before_script:
+before_script:
+ - make
 #   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 #   - dep ensure
 
