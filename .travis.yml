@@ -1,18 +1,19 @@
 language: go
 
 go:
-  - "1.10"
-  - "1.11"
-  - "1.12"
-  - tip
+- '1.10'
+- '1.11'
+- '1.12'
+- tip
 
 before_script:
- - make
-#   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-#   - dep ensure
+- make
+
+before_install:
+# gox simplifies building for multiple architectures
+- go get github.com/mitchellh/gox
 
 sudo: false
-
 script: make test
 
 notifications:
@@ -20,4 +21,20 @@ notifications:
 
 matrix:
   allow_failures:
-    - go: tip
+  - go: tip
+
+before_deploy:
+ - gox -os="linux darwin windows" -arch="amd64" -output="s3_fetch_certs.{{.OS}}.{{.Arch}}" -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: HzMGZAQISGKVCp2i6THlOAfSYnbLbONx06tco3nN3WqBdBrXho/fgK6dbDK5LxeFeq5pxTW2z+0EYZrCYU5fJbVtUI6HXJYQJkrCn1XoZ0a9drTAWbrLAb5YcWqMjXollLouFButiiCZmxB3dzLwX5PsGS2soB6evBWs2gllKWGqQE7X6QTIFftmBh5yUyR6+rOVhKYTdwhQ1BnpkoVSMkSTsJ22EnoBKKtMrWKSgKSAjBTQaeLgS6uP2Li+/LmvzWFUSxAxGctpXMdZX/5/13qqdZikYKVIIgESJSH90LhQwgRyQNkCzmDpqMGPdr/t7lXMg1KRiq9bMzi/pRNoqByd3oL3xKT8L0NJausoF6islubkJakv0yIiVS7ruiCCRwJH/Ddmwb0reqQQbwq8jUen31kfv0EwrCD6f/UCgV89nI+MIDxQRG7Q1oEpfsP5Lb3SsMwJ+wRVJo4f7ktegRP2wnjUr2hXlSSzzJ3BNP6q48xsE2ECgmUdpJC00msJWE8AeNc1pa23B+GkHJpmiD0UXcc5lgMVPsfnIlZqyOKFogM/dEnI12gn22xmUWN2rfNSUUlP2tDImwX/Wj7Wz0s6xj0GsJ0i4RldR/QFQoYw/phvIkCUymmutZOl1TJXFSPcB5pcj2aj21WQvrS+7FID3AsDt+gZEhecB/7/a/I=
+  file:
+  - s3_fetch_certs.darwin.amd64
+  - s3_fetch_certs.linux.amd64
+  - s3_fetch_certs.windows.amd64.exe
+  on:
+    repo: railsware/s3_fetch_certs
+    tags: true
