@@ -1,0 +1,22 @@
+language: go
+
+go:
+  - "1.10"
+  - "1.11"
+  - "1.12"
+  - tip
+
+before_script:
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+  - dep ensure
+
+sudo: false
+
+script: make test
+
+notifications:
+  email: false
+
+matrix:
+  allow_failures:
+    - go: tip
