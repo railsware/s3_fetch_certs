@@ -41,7 +41,7 @@ func main() {
 		command := strings.Split(runAfterChange, " ")
 		cmd := exec.Command(command[0])
 		if len(command) > 1 {
-    	cmd = exec.Command(command[0], command[1:]...)
+			cmd = exec.Command(command[0], command[1:]...)
 		}
 
 		stdoutStderr, err := cmd.CombinedOutput()

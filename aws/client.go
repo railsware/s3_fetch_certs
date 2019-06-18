@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"fmt"
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -54,7 +54,7 @@ func (awsc *AWSConnection) DownloadFiles(bucket, certsKey, outDirectory, outName
 
 	objData, err := awsc.S3Client.HeadObject(&s3.HeadObjectInput{
 		Bucket: aws.String(bucket),
-		Key: aws.String(fmt.Sprintf("%s.crt", certsKey)),
+		Key:    aws.String(fmt.Sprintf("%s.crt", certsKey)),
 	})
 
 	if err != nil {
@@ -103,19 +103,18 @@ func (awsc *AWSConnection) DownloadFiles(bucket, certsKey, outDirectory, outName
 	}
 	defer crtKey.Close()
 
-
-	objects := []s3manager.BatchDownloadObject {
+	objects := []s3manager.BatchDownloadObject{
 		{
-			Object: &s3.GetObjectInput {
+			Object: &s3.GetObjectInput{
 				Bucket: aws.String(bucket),
-				Key: aws.String(fmt.Sprintf("%s.key", certsKey)),
+				Key:    aws.String(fmt.Sprintf("%s.key", certsKey)),
 			},
 			Writer: privateKey,
 		},
 		{
-			Object: &s3.GetObjectInput {
+			Object: &s3.GetObjectInput{
 				Bucket: aws.String(bucket),
-				Key: aws.String(fmt.Sprintf("%s.crt", certsKey)),
+				Key:    aws.String(fmt.Sprintf("%s.crt", certsKey)),
 			},
 			Writer: crtKey,
 		},
