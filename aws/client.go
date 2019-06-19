@@ -1,7 +1,7 @@
 package aws
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
@@ -62,30 +62,31 @@ func (awsc *AWSConnection) DownloadFiles(bucket, certsKey, outDirectory, outName
 		return false
 	}
 
-	s3Etag := *objData.ETag
+	s3FileSha256 := *objData.Metadata["Sha256"]
 
 	certFilename := fmt.Sprintf("%s/%s.crt", outDirectory, outName)
 
 	if _, err := os.Stat(certFilename); !os.IsNotExist(err) {
-		crtMd5CheckKey, err := os.Open(certFilename)
-		if err != nil {
-			log.Errorf("Unable to open file %v", err)
-			return false
-		}
 
-		hash := md5.New()
-		if _, err := io.Copy(hash, crtMd5CheckKey); err != nil {
-			log.Errorf("Unable to calculate file md5 %v", err)
-			return false
-		}
-		//Get the 16 bytes hash
-		hashInBytes := hash.Sum(nil)[:16]
-		//Convert the bytes to a string
-		hashSum := hex.EncodeToString(hashInBytes)
+		if s3FileSha256 != "" {
+			crtShaSumCheckKey, err := os.Open(certFilename)
+			if err != nil {
+				log.Errorf("Unable to open file %v", err)
+				return false
+			}
 
-		if fmt.Sprintf("\"%s\"", hashSum) == s3Etag {
-			log.Infof("%s md5sum the same as on s3", certFilename)
-			return false
+			hash := sha256.New()
+			if _, err := io.Copy(hash, crtShaSumCheckKey); err != nil {
+				log.Errorf("Unable to calculate file md5 %v", err)
+				return false
+			}
+			//Convert the bytes to a string
+			hashSum := hex.EncodeToString(hash.Sum(nil))
+
+			if hashSum == s3FileSha256 {
+				log.Infof("%s sha256 the same as on s3", certFilename)
+				return false
+			}
 		}
 	}
 
