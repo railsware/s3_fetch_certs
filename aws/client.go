@@ -66,9 +66,8 @@ func (awsc *AWSConnection) DownloadFiles(bucket, certsKey, outDirectory, outName
 
 	certFilename := fmt.Sprintf("%s/%s.crt", outDirectory, outName)
 
-	if _, err := os.Stat(certFilename); !os.IsNotExist(err) {
-
-		if s3FileSha256 != "" {
+	if s3FileSha256 != "" {
+		if _, err := os.Stat(certFilename); !os.IsNotExist(err) {
 			crtShaSumCheckKey, err := os.Open(certFilename)
 			if err != nil {
 				log.Errorf("Unable to open file %v", err)
@@ -77,7 +76,7 @@ func (awsc *AWSConnection) DownloadFiles(bucket, certsKey, outDirectory, outName
 
 			hash := sha256.New()
 			if _, err := io.Copy(hash, crtShaSumCheckKey); err != nil {
-				log.Errorf("Unable to calculate file md5 %v", err)
+				log.Errorf("Unable to calculate file sha256 %v", err)
 				return false
 			}
 			//Convert the bytes to a string
