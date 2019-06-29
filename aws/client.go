@@ -62,7 +62,11 @@ func (awsc *AWSConnection) DownloadFiles(bucket, certsKey, outDirectory, outName
 		return false
 	}
 
-	s3FileSha256 := *objData.Metadata["Sha256"]
+	var s3FileSha256 string
+	s3FileSha256Pointer, keyExists := objData.Metadata["Sha256"]
+	if keyExists == true {
+		s3FileSha256 = *s3FileSha256Pointer
+	}
 
 	certFilename := fmt.Sprintf("%s/%s.crt", outDirectory, outName)
 
