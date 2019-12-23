@@ -8,7 +8,7 @@ before_install:
 - go get github.com/mitchellh/gox
 
 sudo: false
-script: make test
+dist: bionic
 
 notifications:
   email: false
