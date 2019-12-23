@@ -1,8 +1,5 @@
 language: go
 
-before_script:
-- make
-
 before_install:
 # gox simplifies building for multiple architectures
 - go get github.com/mitchellh/gox
