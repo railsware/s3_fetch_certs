@@ -1,0 +1,98 @@
+name: "Build & Release"
+
+on: [push]
+
+env:
+  GO_VERSION: 1.15.4
+
+jobs:
+  build:
+    name: "Build"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Restore go modules cache
+        uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: CLI tests
+        run: go test ./...
+        working-directory: cli
+
+      - name: Serverless tests
+        run: go test ./...
+        working-directory: serverless
+
+      - name: Get gox
+        run: go get github.com/mitchellh/gox
+
+      - name: Build
+        run: gox -os="linux darwin windows" -arch="amd64" -output="build/s3_fetch_certs.{{.OS}}.{{.Arch}}" -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: binaries
+          path: build/
+          if-no-files-found: error
+
+  release:
+    name: "Release"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    needs: [build]
+    steps:
+      - name: Download linux binary
+        uses: actions/download-artifact@v2
+        with:
+          name: binaries
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload linux binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: s3_fetch_certs.linux.amd64
+          asset_name: s3_fetch_certs.linux.amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload darwin binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: s3_fetch_certs.darwin.amd64
+          asset_name: s3_fetch_certs.darwin.amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload windows binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: s3_fetch_certs.windows.amd64.exe
+          asset_name: s3_fetch_certs.windows.amd64.exe
+          asset_content_type: application/octet-stream
