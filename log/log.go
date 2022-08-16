@@ -74,5 +74,5 @@ func Debugf(format string, a ...interface{}) (err error) {
 // Stratup Info
 func StartupInfo() {
 	Infof("S3_FETCH, built with Go %s", runtime.Version())
-	Infof("(c) leopard aka Alexey Vasiliev\n\n")
+	Infof("(c) Railsware Product Studio, Inc.\n\n")
 }
